@@ -1,0 +1,4 @@
+SOURCE: paste_demo_03 
+DATE: 2026-06-03 
+
+Se ha localizado la dirección usuario@empresademo.es en una entrada perteneciente a un conjunto de datos sintético.
