@@ -9,20 +9,23 @@ st.set_page_config(
     layout="wide"
 )
 
-
-
 # Header
 
+st.markdown(
+    "<h1 style='text-align: center;'>Data Leaks Monitoring</h1>",
+    unsafe_allow_html=True
+)
 
-st.title("Data Leaks Monitoring")
-
-st.caption(
+st.markdown(
+    "<p style='text-align: center;'>"
     "Monitorización en la nube de filtración de datos en la Deep Web"
+    "</p>",
+    unsafe_allow_html=True
 )
 
 st.divider()
 
-# Kav Bar
+# Nav Bar
 
 if "page" not in st.session_state:
     st.session_state.page = "alerts"
@@ -43,21 +46,17 @@ with col2:
     ):
         st.session_state.page = "companies"
 
-
 st.divider()
 
-# Alertas (Alerts)
+# Alertas (ALERTS)
 
 if st.session_state.page == "alerts":
 
     st.header("Alertas")
 
     try:
-
         alerts = get_alerts()
         companies = get_companies()
-
-        # Filters
 
         col1, col2 = st.columns(2)
 
@@ -95,8 +94,6 @@ if st.session_state.page == "alerts":
                 severity_options
             )
 
-        # Apply filters
-
         filtered_alerts = alerts
 
         if company_filter != "Todas":
@@ -125,8 +122,6 @@ if st.session_state.page == "alerts":
         st.write(
             f"**{len(filtered_alerts)} alertas**"
         )
-
-        # Alert cards
 
         if not filtered_alerts:
 
@@ -191,8 +186,6 @@ if st.session_state.page == "alerts":
                 border=True
             ):
 
-                # Header
-
                 st.subheader(
                     f"{severity} — {company_name}"
                 )
@@ -200,8 +193,6 @@ if st.session_state.page == "alerts":
                 st.caption(
                     f"Company ID: {company_id}"
                 )
-
-                # Matches
 
                 st.markdown(
                     "**Coincidencias detectadas**"
@@ -244,8 +235,6 @@ if st.session_state.page == "alerts":
                         "Sin coincidencias registradas."
                     )
 
-                # Source information
-
                 st.markdown(
                     "**Información del origen**"
                 )
@@ -276,6 +265,7 @@ if st.session_state.page == "alerts":
             f"No se pudieron cargar las alertas: {error}"
         )
 
+
 # Empresas (COMPANIES)
 
 else:
@@ -285,8 +275,6 @@ else:
     try:
 
         companies = get_companies()
-
-        # Company list
 
         if not companies:
 
@@ -366,8 +354,6 @@ else:
                     f"{notification_email}"
                 )
 
-        # Create company
-
         st.divider()
 
         st.subheader(
@@ -379,42 +365,42 @@ else:
         ):
 
             company_id = st.text_input(
-                "Company ID *"
+                "Company ID *",
+                key="company_id"
             )
 
             domains = st.text_input(
                 "Domains *",
-                placeholder="ejemplo.es, ejemplo.com"
+                placeholder="ejemplo.es, ejemplo.com",
+                key="domains"
             )
 
             name = st.text_input(
-                "Nombre"
+                "Nombre",
+                key="name"
             )
 
             emails = st.text_input(
                 "Emails",
-                placeholder=(
-                    "admin@ejemplo.es, "
-                    "user@ejemplo.es"
-                )
+                placeholder="admin@ejemplo.es, user@ejemplo.es",
+                key="emails"
             )
 
             keywords = st.text_input(
                 "Keywords",
-                placeholder=(
-                    "keyword1, keyword2"
-                )
+                placeholder="keyword1, keyword2",
+                key="keywords"
             )
 
             notification_email = st.text_input(
-                "Email de notificaciones"
+                "Email de notificaciones",
+                key="notification_email"
             )
 
             users = st.text_input(
                 "Usuarios",
-                placeholder=(
-                    "usuario1, usuario2"
-                )
+                placeholder="usuario1, usuario2",
+                key="users"
             )
 
             submitted = st.form_submit_button(
@@ -422,8 +408,6 @@ else:
             )
 
             if submitted:
-
-                # Required fields
 
                 if not company_id.strip():
 
@@ -447,8 +431,6 @@ else:
                             if item.strip()
                         ]
                     }
-
-                    # Optional fields
 
                     if name.strip():
 
@@ -484,19 +466,23 @@ else:
                             if item.strip()
                         ]
 
-                    # Send to API
-
                     try:
 
-                        create_company(
-                            company
-                        )
+                        create_company(company)
+
+                        # Clear form after successful creation
+
+                        st.session_state.company_id = ""
+                        st.session_state.domains = ""
+                        st.session_state.name = ""
+                        st.session_state.emails = ""
+                        st.session_state.keywords = ""
+                        st.session_state.notification_email = ""
+                        st.session_state.users = ""
 
                         st.success(
                             "Empresa creada correctamente."
                         )
-
-                        st.rerun()
 
                     except Exception as error:
 
