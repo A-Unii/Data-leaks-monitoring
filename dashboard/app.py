@@ -15,16 +15,14 @@ st.set_page_config(
 
 
 st.title("Data Leaks Monitoring")
+
 st.caption(
     "Monitorización en la nube de filtración de datos en la Deep Web"
 )
 
 st.divider()
 
-
-
-# Nav Bar
-
+# Kav Bar
 
 if "page" not in st.session_state:
     st.session_state.page = "alerts"
@@ -32,158 +30,353 @@ if "page" not in st.session_state:
 col1, col2 = st.columns(2)
 
 with col1:
-    if st.button("📊 ALERTAS", use_container_width=True):
+    if st.button(
+        "📊 ALERTAS",
+        use_container_width=True
+    ):
         st.session_state.page = "alerts"
 
 with col2:
-    if st.button("🏢 EMPRESAS", use_container_width=True):
+    if st.button(
+        "🏢 EMPRESAS",
+        use_container_width=True
+    ):
         st.session_state.page = "companies"
+
 
 st.divider()
 
-
-
 # Alertas (Alerts)
-
 
 if st.session_state.page == "alerts":
 
     st.header("Alertas")
 
     try:
+
         alerts = get_alerts()
         companies = get_companies()
 
         # Filters
+
         col1, col2 = st.columns(2)
 
         with col1:
+
+            company_options = ["Todas"]
+
+            company_options += [
+                company["company_id"]
+                for company in companies
+            ]
+
             company_filter = st.selectbox(
                 "Empresa",
-                ["Todas"] + [
-                    company["company_id"]
-                    for company in companies
-                ]
+                company_options
             )
 
         with col2:
-            severities = sorted({
-                str(alert.get("severity", "")).upper()
+
+            severity_options = ["Todas"]
+
+            severity_options += sorted({
+                str(
+                    alert.get(
+                        "severity",
+                        ""
+                    )
+                ).upper()
                 for alert in alerts
                 if alert.get("severity")
             })
 
             severity_filter = st.selectbox(
                 "Severidad",
-                ["Todas"] + severities
+                severity_options
             )
 
         # Apply filters
+
         filtered_alerts = alerts
 
         if company_filter != "Todas":
+
             filtered_alerts = [
                 alert
                 for alert in filtered_alerts
-                if alert.get("company_id") == company_filter
+                if alert.get("company_id")
+                == company_filter
             ]
 
         if severity_filter != "Todas":
+
             filtered_alerts = [
                 alert
                 for alert in filtered_alerts
-                if str(alert.get("severity", "")).upper()
+                if str(
+                    alert.get(
+                        "severity",
+                        ""
+                    )
+                ).upper()
                 == severity_filter
             ]
 
-        st.write(f"**{len(filtered_alerts)} alertas**")
+        st.write(
+            f"**{len(filtered_alerts)} alertas**"
+        )
 
-        # Alert list
+        # Alert cards
+
         if not filtered_alerts:
-            st.info("No hay alertas que coincidan con los filtros.")
+
+            st.info(
+                "No hay alertas que coincidan "
+                "con los filtros seleccionados."
+            )
 
         for alert in filtered_alerts:
 
             severity = str(
-                alert.get("severity", "UNKNOWN")
+                alert.get(
+                    "severity",
+                    "UNKNOWN"
+                )
             ).upper()
+
+            company_name = alert.get(
+                "company_name",
+                alert.get(
+                    "company_id",
+                    "Empresa desconocida"
+                )
+            )
 
             company_id = alert.get(
                 "company_id",
-                "Empresa desconocida"
+                "—"
             )
 
-            title = alert.get(
-                "title",
-                "Alerta detectada"
+            matches = alert.get(
+                "matches",
+                []
             )
 
-            description = alert.get(
-                "description",
-                alert.get("text", "")
+            source = alert.get(
+                "source",
+                "—"
             )
 
-            with st.container(border=True):
+            document_id = alert.get(
+                "document_id",
+                "—"
+            )
+
+            date = alert.get(
+                "date",
+                "—"
+            )
+
+            detected_at = alert.get(
+                "detected_at",
+                "—"
+            )
+
+            alert_id = alert.get(
+                "alert_id",
+                "—"
+            )
+
+            with st.container(
+                border=True
+            ):
+
+                # Header
 
                 st.subheader(
-                    f"{severity} — {company_id}"
+                    f"{severity} — {company_name}"
                 )
 
-                if title != "Alerta detectada":
-                    st.write(f"**{title}**")
+                st.caption(
+                    f"Company ID: {company_id}"
+                )
 
-                st.write(description)
+                # Matches
 
-                if alert.get("alert_id"):
-                    st.caption(
-                        f"Alert ID: {alert['alert_id']}"
+                st.markdown(
+                    "**Coincidencias detectadas**"
+                )
+
+                if matches:
+
+                    for match in matches:
+
+                        match_type = match.get(
+                            "type",
+                            "unknown"
+                        )
+
+                        match_value = match.get(
+                            "value",
+                            ""
+                        )
+
+                        icons = {
+                            "user": "👤",
+                            "domain": "🌐",
+                            "email": "✉️",
+                            "keyword": "🔑"
+                        }
+
+                        icon = icons.get(
+                            match_type,
+                            "🔎"
+                        )
+
+                        st.write(
+                            f"{icon} **{match_type}** — "
+                            f"`{match_value}`"
+                        )
+
+                else:
+
+                    st.write(
+                        "Sin coincidencias registradas."
                     )
 
+                # Source information
+
+                st.markdown(
+                    "**Información del origen**"
+                )
+
+                st.write(
+                    f"**Fuente:** {source}"
+                )
+
+                st.write(
+                    f"**Documento:** `{document_id}`"
+                )
+
+                st.write(
+                    f"**Fecha del documento:** {date}"
+                )
+
+                st.write(
+                    f"**Detectado:** {detected_at}"
+                )
+
+                st.caption(
+                    f"Alert ID: {alert_id}"
+                )
+
     except Exception as error:
+
         st.error(
             f"No se pudieron cargar las alertas: {error}"
         )
 
-
-
-# Empresas (Companies)
+# Empresas (COMPANIES)
 
 else:
 
     st.header("Empresas")
 
     try:
+
         companies = get_companies()
 
+        # Company list
+
         if not companies:
-            st.info("No hay empresas registradas.")
+
+            st.info(
+                "No hay empresas registradas."
+            )
 
         for company in companies:
 
-            with st.container(border=True):
+            company_id = company.get(
+                "company_id",
+                "—"
+            )
 
-                st.subheader(
-                    company.get(
-                        "name",
-                        company["company_id"]
-                    )
-                )
+            name = company.get(
+                "name",
+                company_id
+            )
+
+            domains = company.get(
+                "domains",
+                []
+            )
+
+            emails = company.get(
+                "emails",
+                []
+            )
+
+            keywords = company.get(
+                "keywords",
+                []
+            )
+
+            users = company.get(
+                "users",
+                []
+            )
+
+            notification_email = company.get(
+                "notification_email",
+                "—"
+            )
+
+            with st.container(
+                border=True
+            ):
+
+                st.subheader(name)
 
                 st.write(
-                    f"**Company ID:** "
-                    f"{company['company_id']}"
+                    f"**Company ID:** `{company_id}`"
                 )
 
                 st.write(
                     f"**Domains:** "
-                    f"{', '.join(company.get('domains', []))}"
+                    f"{', '.join(domains) if domains else '—'}"
                 )
+
+                st.write(
+                    f"**Emails:** "
+                    f"{', '.join(emails) if emails else '—'}"
+                )
+
+                st.write(
+                    f"**Keywords:** "
+                    f"{', '.join(keywords) if keywords else '—'}"
+                )
+
+                st.write(
+                    f"**Users:** "
+                    f"{', '.join(users) if users else '—'}"
+                )
+
+                st.write(
+                    f"**Email de notificaciones:** "
+                    f"{notification_email}"
+                )
+
+        # Create company
 
         st.divider()
 
-        st.subheader("➕ Dar de alta una empresa")
+        st.subheader(
+            "➕ Dar de alta empresa"
+        )
 
-        with st.form("company_form"):
+        with st.form(
+            "company_form"
+        ):
 
             company_id = st.text_input(
                 "Company ID *"
@@ -194,16 +387,23 @@ else:
                 placeholder="ejemplo.es, ejemplo.com"
             )
 
-            name = st.text_input("Nombre")
+            name = st.text_input(
+                "Nombre"
+            )
 
             emails = st.text_input(
                 "Emails",
-                placeholder="admin@ejemplo.es, user@ejemplo.es"
+                placeholder=(
+                    "admin@ejemplo.es, "
+                    "user@ejemplo.es"
+                )
             )
 
             keywords = st.text_input(
                 "Keywords",
-                placeholder="keyword1, keyword2"
+                placeholder=(
+                    "keyword1, keyword2"
+                )
             )
 
             notification_email = st.text_input(
@@ -212,7 +412,9 @@ else:
 
             users = st.text_input(
                 "Usuarios",
-                placeholder="usuario1, usuario2"
+                placeholder=(
+                    "usuario1, usuario2"
+                )
             )
 
             submitted = st.form_submit_button(
@@ -221,15 +423,24 @@ else:
 
             if submitted:
 
-                if not company_id or not domains:
+                # Required fields
+
+                if not company_id.strip():
+
                     st.error(
-                        "Company ID y Domains son obligatorios."
+                        "Company ID es obligatorio."
+                    )
+
+                elif not domains.strip():
+
+                    st.error(
+                        "Domains es obligatorio."
                     )
 
                 else:
 
                     company = {
-                        "company_id": company_id,
+                        "company_id": company_id.strip(),
                         "domains": [
                             item.strip()
                             for item in domains.split(",")
@@ -237,32 +448,49 @@ else:
                         ]
                     }
 
-                    optional_fields = {
-                        "name": name,
-                        "emails": emails,
-                        "keywords": keywords,
-                        "notification_email": notification_email,
-                        "users": users
-                    }
+                    # Optional fields
 
-                    for field, value in optional_fields.items():
+                    if name.strip():
 
-                        if field == "notification_email":
+                        company["name"] = name.strip()
 
-                            if value.strip():
-                                company[field] = value.strip()
+                    if emails.strip():
 
-                        elif value.strip():
+                        company["emails"] = [
+                            item.strip()
+                            for item in emails.split(",")
+                            if item.strip()
+                        ]
 
-                            company[field] = [
-                                item.strip()
-                                for item in value.split(",")
-                                if item.strip()
-                            ]
+                    if keywords.strip():
+
+                        company["keywords"] = [
+                            item.strip()
+                            for item in keywords.split(",")
+                            if item.strip()
+                        ]
+
+                    if notification_email.strip():
+
+                        company[
+                            "notification_email"
+                        ] = notification_email.strip()
+
+                    if users.strip():
+
+                        company["users"] = [
+                            item.strip()
+                            for item in users.split(",")
+                            if item.strip()
+                        ]
+
+                    # Send to API
 
                     try:
 
-                        create_company(company)
+                        create_company(
+                            company
+                        )
 
                         st.success(
                             "Empresa creada correctamente."
